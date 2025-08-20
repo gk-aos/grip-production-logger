@@ -15,7 +15,7 @@ A production logging application that captures data from Engel injection molding
 ### Prerequisites
 
 1. **Railway Account**: Sign up at [railway.app](https://railway.app)
-2. **Claude API Key**: Get your API key from [Anthropic](https://console.anthropic.com/)
+2. **OpenAI API Key**: Get your API key from [OpenAI](https://platform.openai.com/api-keys)
 
 ### Deployment Steps
 
@@ -33,8 +33,8 @@ A production logging application that captures data from Engel injection molding
 
 2. **Set Environment Variables**
    ```bash
-   # Set your Claude API key
-   railway variables set CLAUDE_API_KEY=your_api_key_here
+   # Set your OpenAI API key
+   railway variables set OPENAI_API_KEY=your_api_key_here
    ```
 
 3. **Deploy**
@@ -51,7 +51,7 @@ A production logging application that captures data from Engel injection molding
 
 ### Environment Variables
 
-- `CLAUDE_API_KEY`: Your Anthropic Claude API key (required)
+- `OPENAI_API_KEY`: Your OpenAI API key (required)
 - `PORT`: Port number (Railway sets this automatically)
 - `RAILWAY_ENVIRONMENT`: Set to 'true' on Railway (automatic)
 
@@ -71,7 +71,7 @@ A production logging application that captures data from Engel injection molding
 2. **Set Environment Variables**
    ```bash
    cp env.example .env
-   # Edit .env with your CLAUDE_API_KEY
+   # Edit .env with your OPENAI_API_KEY
    ```
 
 3. **Run Locally**
@@ -109,7 +109,7 @@ A production logging application that captures data from Engel injection molding
 
 ### Common Issues
 
-1. **Missing API Key**: Ensure `CLAUDE_API_KEY` is set in Railway variables
+1. **Missing API Key**: Ensure `OPENAI_API_KEY` is set in Railway variables
 2. **Database Errors**: The app automatically creates tables on startup
 3. **Upload Failures**: Check that the uploads directory exists and is writable
 

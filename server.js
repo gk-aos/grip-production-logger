@@ -5,7 +5,7 @@ const multer = require('multer');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const Anthropic = require('@anthropic-ai/sdk');
+const OpenAI = require('openai');
 
 const app = express();
 app.use(cors());
@@ -32,9 +32,9 @@ app.get('/simple', (req, res) => {
   `);
 });
 
-// Initialize Anthropic
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY,
+// Initialize OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // Initialize SQLite database
@@ -80,18 +80,16 @@ async function extractFromEngelScreen(imagePath) {
     const imageBuffer = fs.readFileSync(imagePath);
     const base64Image = imageBuffer.toString('base64');
     
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
       max_tokens: 1000,
       messages: [{
         role: "user",
         content: [
           {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: "image/jpeg",
-              data: base64Image
+            type: "image_url",
+            image_url: {
+              url: `data:image/jpeg;base64,${base64Image}`
             }
           },
           {
@@ -108,10 +106,10 @@ async function extractFromEngelScreen(imagePath) {
       }]
     });
     
-    const extractedText = response.content[0].text;
+    const extractedText = response.choices[0].message.content;
     return JSON.parse(extractedText);
   } catch (error) {
-    console.error('Claude extraction error:', error);
+    console.error('OpenAI extraction error:', error);
     // Fallback to mock data for testing
     return {
       good_parts: 323,
@@ -127,18 +125,16 @@ async function extractFromCoilLabels(imagePath) {
     const imageBuffer = fs.readFileSync(imagePath);
     const base64Image = imageBuffer.toString('base64');
     
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
       max_tokens: 1000,
       messages: [{
         role: "user",
         content: [
           {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: "image/jpeg",
-              data: base64Image
+            type: "image_url",
+            image_url: {
+              url: `data:image/jpeg;base64,${base64Image}`
             }
           },
           {
@@ -155,12 +151,12 @@ async function extractFromCoilLabels(imagePath) {
       }]
     });
     
-    const extractedText = response.content[0].text;
+    const extractedText = response.choices[0].message.content;
     const data = JSON.parse(extractedText);
     data.estimated_blades = Math.floor(data.total_length * 4.4); // ~4.4 blades per foot
     return data;
   } catch (error) {
-    console.error('Claude extraction error:', error);
+    console.error('OpenAI extraction error:', error);
     // Fallback to mock data
     return {
       coil_count: 2,
@@ -268,5 +264,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Production logger ready on http://0.0.0.0:${PORT}`);
-    console.log(`Claude API Key: ${process.env.CLAUDE_API_KEY ? 'Configured ✓' : 'Missing ✗'}`);
+    console.log(`OpenAI API Key: ${process.env.OPENAI_API_KEY ? 'Configured ✓' : 'Missing ✗'}`);
 });
