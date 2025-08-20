@@ -12,6 +12,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Debug route to test if server is working
+app.get('/test', (req, res) => {
+  res.json({ message: 'Server is working!', timestamp: new Date().toISOString() });
+});
+
+// Simple HTML test route
+app.get('/simple', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head><title>Test</title></head>
+    <body>
+      <h1>Simple Test Page</h1>
+      <p>If you can see this, the server is working!</p>
+      <p>Time: ${new Date().toISOString()}</p>
+    </body>
+    </html>
+  `);
+});
+
 // Initialize Anthropic
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
