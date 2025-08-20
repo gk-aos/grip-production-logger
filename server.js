@@ -246,7 +246,7 @@ app.get('/api/summary/today', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-    console.log(`Production logger running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Production logger ready on http://0.0.0.0:${PORT}`);
     console.log(`Claude API Key: ${process.env.CLAUDE_API_KEY ? 'Configured ✓' : 'Missing ✗'}`);
 });

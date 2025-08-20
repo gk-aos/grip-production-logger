@@ -3,3 +3,4 @@ node_modules/
 *.db
 uploads/
 .DS_Store
+echo ".env" >> .gitignore``
