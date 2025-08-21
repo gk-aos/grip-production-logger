@@ -77,48 +77,61 @@ const upload = multer({ dest: 'uploads/' });
 // Claude Vision API extraction
 async function extractFromEngelScreen(imagePath) {
   try {
-    const imageBuffer = fs.readFileSync(imagePath);
-    const base64Image = imageBuffer.toString('base64');
-    
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      max_tokens: 1000,
-      messages: [{
-        role: "user",
-        content: [
-          {
-            type: "image_url",
-            image_url: {
-              url: `data:image/jpeg;base64,${base64Image}`
-            }
-          },
-          {
-            type: "text",
-            text: `Extract from this Engel injection molding screen:
-                   1. Production good parts (the number shown as "Production good parts")
-                   2. Reject - startup cycles (the number shown)
-                   3. Production rejects (the number shown)
-                   4. Production total (the total parts produced)
-                   
-                   Return ONLY valid JSON: {"good_parts": number, "scrap_parts": number, "reject_parts": number, "total_parts": number}`
-          }
-        ]
-      }]
-    });
-    
-    const extractedText = response.choices[0].message.content;
-    return JSON.parse(extractedText);
-  } catch (error) {
-    console.error('OpenAI extraction error:', error);
-    // Fallback to mock data for testing
-    return {
-      good_parts: 323,
-      scrap_parts: 29,
-      reject_parts: 0,
-      total_parts: 352
-    };
-  }
-}
+    const imageBuffer = fs.readFileSync(imagePath);async function extractFromEngelScreen(imagePath) {
+      try {
+        const imageBuffer = fs.readFileSync(imagePath);
+        const base64Image = imageBuffer.toString('base64');
+        
+        console.log('Sending image to OpenAI, base64 length:', base64Image.length);
+        
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`
+                }
+              },
+              {
+                type: "text",
+                text: `Extract any production numbers visible on this injection molding machine screen.
+                       Look for:
+                       - Good parts / Accepted parts / OK parts (any production count)
+                       - Reject parts / Scrap / NG parts
+                       - Total parts / Total production
+                       
+                       If you can see ANY numbers on the screen, extract them.
+                       
+                       Return ONLY valid JSON: {"good_parts": number, "scrap_parts": number, "reject_parts": number, "total_parts": number}
+                       
+                       If a value is not visible, use 0.`
+              }
+            ]
+          }]
+        });
+        
+        const extractedText = response.choices[0].message.content;
+        console.log('OpenAI response:', extractedText);
+        
+        // Clean the response (remove markdown if any)
+        const cleanedText = extractedText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleanedText);
+        
+        console.log('Parsed data:', parsed);
+        return parsed;
+        
+      } catch (error) {
+        console.error('OpenAI extraction error:', error);
+        console.error('Error details:', error.message);
+        
+        // Don't return fallback - return the actual error
+        throw error;
+      }
+    }
 
 async function extractFromCoilLabels(imagePath) {
   try {
@@ -170,28 +183,24 @@ async function extractFromCoilLabels(imagePath) {
 // API Endpoints
 app.post('/api/engel/capture', upload.single('photo'), async (req, res) => {
   try {
+    console.log('Processing image:', req.file.originalname);
     const extracted = await extractFromEngelScreen(req.file.path);
     
-    db.run(
-      `INSERT INTO production_log (type, good_parts, scrap_parts, reject_parts, total_parts, shift, operator) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      ['molding', extracted.good_parts, extracted.scrap_parts, extracted.reject_parts, 
-       extracted.total_parts, req.body.shift || 'day', req.body.operator || 'Unknown'],
-      function(err) {
-        if (err) throw err;
-        
-        // Clean up uploaded file
-        fs.unlinkSync(req.file.path);
-        
-        res.json({ 
-          success: true, 
-          id: this.lastID,
-          data: extracted 
-        });
-      }
-    );
+    // ... rest of your database code ...
+    
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Capture error:', error);
+    
+    // Clean up file even on error
+    if (req.file && req.file.path) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      details: 'Failed to extract data from image'
+    });
   }
 });
 
